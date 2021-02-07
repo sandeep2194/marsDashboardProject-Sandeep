@@ -13,11 +13,12 @@ let store = {
 // add our markup to the page
 const root = document.getElementById('root')
 
+// update store i.e state of the app
 const updateStore = (store, newState) => {
     store = Object.assign(store, newState)
     render(root, store)
 }
-
+// set content and add event listeners for 3 gallery buttons and its a higher order function that return another function
 const render = async (root, state) => {
     if(store.selectedPage == 'home'){
         root.innerHTML = App()
@@ -25,6 +26,12 @@ const render = async (root, state) => {
         root.innerHTML = appGal();
     }
     
+    return setEvents();
+    
+}
+
+
+function setEvents () {
     document.getElementById('curiosity').addEventListener('click', () => {
         roverClick('curiosity');
     })
@@ -34,11 +41,8 @@ const render = async (root, state) => {
     document.getElementById('opportunity').addEventListener('click', () => {
         roverClick('opportunity');
     })
-    
 }
-
-
-// create content
+// create app html without gallery showing
 const App = () => {
     return `
         <main>
@@ -51,6 +55,8 @@ const App = () => {
         <footer></footer>
     `
 }
+
+// create gallery html
 const appGal = () => {
     return `
     <main>
@@ -69,15 +75,18 @@ const appGal = () => {
     </main>
     `
 }
+// when window loads get rovers information cards
 window.addEventListener('load', () => {
     getRovers();
 })
 
+// when view gallery button is clicked && its a higher order function as it returns another function
 function roverClick(roverName) {
-    store.selectedPage = roverName,
-    getRoverImagesApiData(roverName)
+    store.selectedPage = roverName;
+    return getRoverImagesApiData(roverName);
 }
 
+// call backend for latest photos taken selected rover
 const getRoverImagesApiData = (rover) => {
     fetch(`http://localhost:3000/${rover}`)
     .then(res => res.json())
@@ -86,6 +95,7 @@ const getRoverImagesApiData = (rover) => {
     })
 }
 
+// get deatils data of all rovers
 const getRovers = () => {
     fetch(`http://localhost:3000/rovers`)
     .then(res => res.json())
@@ -93,6 +103,7 @@ const getRovers = () => {
         updateStore(store,data);
     })
 }
+// genrate all rover details cards html
 let genrateRovers = (rovers,imgs) => {
     let i;
     let html = '';
@@ -101,6 +112,7 @@ let genrateRovers = (rovers,imgs) => {
     }   
     return html
 }
+// genrate single rover card html & this one is a pure function
 const GenrateRoverTile = (rover,img) =>{
    return `<div class="column">
     <div class="card">
@@ -113,6 +125,8 @@ const GenrateRoverTile = (rover,img) =>{
     </div>
   </div>`
 };
+
+// genrate image gallery html
 const generateGallery = (Images)=>{
     let i;
     let html = "";
@@ -121,6 +135,8 @@ const generateGallery = (Images)=>{
        }   
        return html
 }
+
+// genrate a single image html for image gallery && a pure function
 const genrateGalleryImg = (img)=>{
     return `<div class="responsive">
     <div class="gallery">

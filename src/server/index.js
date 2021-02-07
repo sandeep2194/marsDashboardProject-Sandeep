@@ -12,9 +12,6 @@ app.use(bodyParser.json())
 
 app.use('/', express.static(path.join(__dirname, '../public')))
 
-// your API calls
-
-// example API call
 
 
  async function fetchRoverJSON(rover) {
