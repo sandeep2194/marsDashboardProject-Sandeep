@@ -1,4 +1,4 @@
-let store = {
+let store = Immutable.Map({
     rovers : ['curiosity','spirit','opportunity'],
     imgOfEachRover:[
         'https://cdn.mos.cms.futurecdn.net/NB3BaBuHQbrynUjYaP6oLf-1200-80.jpg',
@@ -8,22 +8,25 @@ let store = {
     rover_details: {},
   	rover_images: {},
     selectedPage: 'home'
-}
+});
 
 // add our markup to the page
 const root = document.getElementById('root')
-
+const view = document.getElementById('view')
 // update store i.e state of the app
-const updateStore = (store, newState) => {
-    store = Object.assign(store, newState)
-    render(root, store)
+const updateStore = (state,newState) => {
+    newstore = state.merge(newState);
+    
+    render(root, newstore)
 }
 // set content and add event listeners for 3 gallery buttons and its a higher order function that return another function
 const render = async (root, state) => {
-    if(store.selectedPage == 'home'){
-        root.innerHTML = App()
-    } else if(store.selectedPage == 'curiosity' || store.selectedPage == 'spirit' || store.selectedPage == 'opportunity'){
-        root.innerHTML = appGal();
+    if(state.get('selectedPage') == 'home'){
+        
+        root.innerHTML = App(state)
+    } else if(state.get('selectedPage') == 'curiosity' || state.get('selectedPage') == 'spirit' || state.get('selectedPage') == 'opportunity'){
+        
+        view.innerHTML = appGal(state);
     }
     
     return setEvents();
@@ -43,85 +46,84 @@ function setEvents () {
     })
 }
 // create app html without gallery showing
-const App = () => {
+const App = (state) => {
+    
     return `
-        <main>
             <section>
             <div class="row">
-                ${genrateRovers(store.rover_details,store.imgOfEachRover)}
+                ${genrateRovers(state.get('rover_details'),state.get('imgOfEachRover'))}
           </div>
             </section>
-        </main>
-        <footer></footer>
     `
 }
 
 // create gallery html
-const appGal = () => {
+const appGal = (state) => {
+    
     return `
-    <main>
-    <section>
-            <div class="row">
-                ${genrateRovers(store.rover_details,store.imgOfEachRover)}
-          </div>
-            </section>
         <section id="appGal">
 
-        ${generateGallery(store.rover_images)}
+        ${generateGallery(state.get('rover_images'))}
 
         <div class="clearfix"></div>
 
         </section>
-    </main>
     `
 }
 // when window loads get rovers information cards
 window.addEventListener('load', () => {
-    getRovers();
+    getRovers(store);
 })
 
 // when view gallery button is clicked && its a higher order function as it returns another function
 function roverClick(roverName) {
-    store.selectedPage = roverName;
-    return getRoverImagesApiData(roverName);
+    
+    const selectedState = store.update((store) => {
+        return store.set('selectedPage', roverName)
+    })
+    return getRoverImagesApiData(roverName,selectedState);
 }
 
 // call backend for latest photos taken selected rover
-const getRoverImagesApiData = (rover) => {
+const getRoverImagesApiData = (rover,state) => {
     fetch(`http://localhost:3000/${rover}`)
     .then(res => res.json())
     .then(data => {
-        updateStore(store,data)
+        
+        updateStore(state,data)
     })
 }
 
 // get deatils data of all rovers
-const getRovers = () => {
+const getRovers = (state) => {
     fetch(`http://localhost:3000/rovers`)
     .then(res => res.json())
     .then(data => {
-        updateStore(store,data);
+        updateStore(state,data);
     })
 }
 // genrate all rover details cards html
 let genrateRovers = (rovers,imgs) => {
     let i;
     let html = '';
-    for(i=0; i<rovers.length; i++) {
-     html += GenrateRoverTile(rovers[i],imgs[i])
+    
+    for(i=0; i<rovers.size; i++) {
+        
+     html += GenrateRoverTile(rovers.get(i),imgs.pop())
     }   
     return html
 }
 // genrate single rover card html & this one is a pure function
 const GenrateRoverTile = (rover,img) =>{
+    
    return `<div class="column">
     <div class="card">
     <img src="${img}" alt="Avatar" class="avatar">
-    <h3>${rover.name}</h3>
-    <p>landing date : ${rover.landing_date}</p>
-    <p>launch_date : ${rover.launch_date}</p>
-    <p>status : ${rover.status}</p>
-    <a href='#appGal' id='${rover.name.toLowerCase()}' class="button"'>View Gallery</a>
+    <h3>${rover.get('name')}</h3>
+    <p>landing date : ${rover.get('landing_date')}</p>
+    <p>launch_date : ${rover.get('launch_date')}</p>
+    <p>status : ${rover.get('status')}</p>
+    <a href='#appGal' id='${rover.get('name').toLowerCase()}' class="button"'>View Gallery</a>
     </div>
   </div>`
 };
@@ -130,14 +132,17 @@ const GenrateRoverTile = (rover,img) =>{
 const generateGallery = (Images)=>{
     let i;
     let html = "";
-    for(i=0; i<Images.length; i++) {
-        html += genrateGalleryImg(Images[i].img_src)
+    
+    for(i=0; i<Images.size; i++) {
+        
+        html += genrateGalleryImg(Images.get(i).get('img_src'))
        }   
        return html
 }
 
 // genrate a single image html for image gallery && a pure function
 const genrateGalleryImg = (img)=>{
+    
     return `<div class="responsive">
     <div class="gallery">
       <a target="_blank" href="${img}">
